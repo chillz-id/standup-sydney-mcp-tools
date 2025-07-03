@@ -1,0 +1,150 @@
+version: '3.8'
+
+services:
+  # Core Business Tools
+  notion-mcp:
+    image: node:18-alpine
+    command: >
+      sh -c "npm install -g @modelcontextprotocol/server-notion && 
+             npx @modelcontextprotocol/server-notion"
+    environment:
+      - NOTION_API_KEY=${NOTION_API_KEY}
+      - PORT=3000
+    ports:
+      - "3001:3000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - mcp-network
+
+  github-mcp:
+    image: node:18-alpine
+    command: >
+      sh -c "npm install -g @modelcontextprotocol/server-github && 
+             npx @modelcontextprotocol/server-github"
+    environment:
+      - GITHUB_PERSONAL_ACCESS_TOKEN=${GITHUB_PERSONAL_ACCESS_TOKEN}
+      - PORT=3000
+    ports:
+      - "3002:3000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - mcp-network
+
+  filesystem-mcp:
+    image: node:18-alpine
+    command: >
+      sh -c "npm install -g @modelcontextprotocol/server-filesystem && 
+             npx @modelcontextprotocol/server-filesystem"
+    environment:
+      - PORT=3000
+      - ALLOWED_DIRECTORIES=/app/storage,/app/shared
+    ports:
+      - "3003:3000"
+    restart: unless-stopped
+    volumes:
+      - mcp_storage:/app/storage
+      - shared_files:/app/shared
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - mcp-network
+
+  # Analytics & Social Media
+  metricool-mcp:
+    image: python:3.11-alpine
+    command: >
+      sh -c "pip install uv && 
+             uvx mcp-metricool"
+    environment:
+      - METRICOOL_USER_TOKEN=${METRICOOL_USER_TOKEN}
+      - METRICOOL_USER_ID=${METRICOOL_USER_ID}
+      - PORT=3000
+    ports:
+      - "3004:3000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - mcp-network
+
+  # Google Drive Integration
+  gdrive-mcp:
+    image: node:18-alpine
+    command: >
+      sh -c "npm install -g @google-cloud/storage @modelcontextprotocol/server-gdrive && 
+             npx @modelcontextprotocol/server-gdrive"
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/gdrive-service-account.json
+      - PORT=3000
+    ports:
+      - "3005:3000"
+    restart: unless-stopped
+    volumes:
+      - gdrive_credentials:/app/credentials
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - mcp-network
+
+  # MCP Gateway - Reverse Proxy for all services
+  mcp-gateway:
+    image: node:18-alpine
+    command: >
+      sh -c "npm install -g express http-proxy-middleware cors && 
+             node /app/gateway.js"
+    environment:
+      - PORT=8000
+      - NOTION_MCP_URL=http://notion-mcp:3000
+      - GITHUB_MCP_URL=http://github-mcp:3000
+      - FILESYSTEM_MCP_URL=http://filesystem-mcp:3000
+      - METRICOOL_MCP_URL=http://metricool-mcp:3000
+      - GDRIVE_MCP_URL=http://gdrive-mcp:3000
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    volumes:
+      - ./gateway.js:/app/gateway.js
+    depends_on:
+      - notion-mcp
+      - github-mcp
+      - filesystem-mcp
+      - metricool-mcp
+      - gdrive-mcp
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - mcp-network
+
+volumes:
+  mcp_storage:
+    driver: local
+  shared_files:
+    driver: local
+  gdrive_credentials:
+    driver: local
+
+networks:
+  mcp-network:
+    driver: bridge
