@@ -68,7 +68,7 @@ except Exception as e:
 # Server configuration
 SERVER_CONFIG = {
     "name": "Stand Up Sydney FastMCP",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "host": "170.64.129.59",  # Updated IP
     "port": 8080,
     "deployed_at": datetime.now().isoformat(),
@@ -223,25 +223,18 @@ def github_operations(repo: str, action: str = "status") -> Dict[str, Any]:
     }
 
 def main():
-    """Start the FastMCP server with proper error handling"""
+    """Start the FastMCP server with correct API"""
     try:
-        host = os.getenv("HOST", "0.0.0.0")
-        port = int(os.getenv("PORT", "8080"))
-        
         logger.info(f"Starting Stand Up Sydney FastMCP Server")
-        logger.info(f"Server: {host}:{port}")
         logger.info(f"Working directory: {os.getcwd()}")
         logger.info(f"Python version: {sys.version}")
         
         enabled_tools = [name for name, config in TOOL_CONFIGS.items() if config['enabled']]
         logger.info(f"Enabled tools: {enabled_tools}")
         
-        # Verify FastMCP is working
-        logger.info("Testing FastMCP functionality...")
-        
-        # Run the FastMCP server
-        logger.info("Starting FastMCP server...")
-        app.run(host=host, port=port)
+        # Run FastMCP server with stdio transport (correct API)
+        logger.info("Starting FastMCP server with stdio transport...")
+        app.run()
         
     except Exception as e:
         logger.error(f"Failed to start server: {e}")
