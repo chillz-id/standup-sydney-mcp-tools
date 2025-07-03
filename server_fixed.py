@@ -68,7 +68,7 @@ except Exception as e:
 # Server configuration
 SERVER_CONFIG = {
     "name": "Stand Up Sydney FastMCP",
-    "version": "1.0.2",
+    "version": "1.1.0",
     "host": "170.64.129.59",  # Updated IP
     "port": 8080,
     "deployed_at": datetime.now().isoformat(),
@@ -98,9 +98,9 @@ TOOL_CONFIGS = {
         "enabled": bool(os.getenv("METRICOOL_API_KEY")),
         "description": "Social media promotion and analytics"
     },
-    "browser": {
+    "playwright": {
         "enabled": True,
-        "description": "Web automation for data scraping and testing"
+        "description": "Playwright browser automation for testing and web scraping"
     },
     "filesystem": {
         "enabled": True,
@@ -219,6 +219,136 @@ def github_operations(repo: str, action: str = "status") -> Dict[str, Any]:
         "repo": repo,
         "action": action,
         "status": "ready_for_implementation",
+        "timestamp": datetime.now().isoformat()
+    }
+
+# ============================================================================
+# PLAYWRIGHT MCP TOOLS
+# ============================================================================
+
+@app.tool()
+def playwright_navigate(url: str, wait_for: str = "load") -> Dict[str, Any]:
+    """
+    Navigate to a URL using Playwright for testing Stand Up Sydney platform
+    
+    Args:
+        url: URL to navigate to (e.g., https://standup-sydney.vercel.app)
+        wait_for: What to wait for (load, networkidle, domcontentloaded)
+    """
+    logger.info(f"Playwright navigation to {url}")
+    
+    return {
+        "action": "navigate",
+        "url": url,
+        "wait_for": wait_for,
+        "status": "ready_for_implementation",
+        "message": f"FastMCP ready to navigate to {url}",
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.tool()
+def playwright_test_element(selector: str, action: str = "click", text: str = None) -> Dict[str, Any]:
+    """
+    Test UI elements on Stand Up Sydney platform
+    
+    Args:
+        selector: CSS selector or text selector
+        action: Action to perform (click, type, check, screenshot)
+        text: Text to type (for type action)
+    """
+    logger.info(f"Playwright element test: {action} on {selector}")
+    
+    return {
+        "action": "test_element",
+        "selector": selector,
+        "test_action": action,
+        "text": text,
+        "status": "ready_for_implementation",
+        "message": f"FastMCP ready to {action} on {selector}",
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.tool()
+def playwright_form_test(form_data: Dict[str, str], submit_selector: str = None) -> Dict[str, Any]:
+    """
+    Test forms on Stand Up Sydney platform (event creation, comedian signup, etc.)
+    
+    Args:
+        form_data: Dictionary of field selectors and values
+        submit_selector: CSS selector for submit button
+    """
+    logger.info(f"Playwright form test with {len(form_data)} fields")
+    
+    return {
+        "action": "form_test",
+        "form_data": form_data,
+        "submit_selector": submit_selector,
+        "status": "ready_for_implementation",
+        "message": f"FastMCP ready to test form with {len(form_data)} fields",
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.tool()
+def playwright_screenshot(selector: str = None, full_page: bool = False) -> Dict[str, Any]:
+    """
+    Take screenshots for visual testing of Stand Up Sydney platform
+    
+    Args:
+        selector: CSS selector to screenshot (if None, screenshots viewport)
+        full_page: Whether to capture full page
+    """
+    logger.info(f"Playwright screenshot: selector={selector}, full_page={full_page}")
+    
+    return {
+        "action": "screenshot",
+        "selector": selector,
+        "full_page": full_page,
+        "status": "ready_for_implementation",
+        "message": "FastMCP ready to take screenshot",
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.tool()
+def playwright_performance_test(url: str, metrics: List[str] = None) -> Dict[str, Any]:
+    """
+    Performance testing for Stand Up Sydney platform
+    
+    Args:
+        url: URL to test
+        metrics: List of metrics to collect (load_time, network_requests, etc.)
+    """
+    if metrics is None:
+        metrics = ["load_time", "network_requests", "console_errors"]
+    
+    logger.info(f"Playwright performance test for {url}")
+    
+    return {
+        "action": "performance_test",
+        "url": url,
+        "metrics": metrics,
+        "status": "ready_for_implementation",
+        "message": f"FastMCP ready to test performance of {url}",
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.tool()
+def playwright_integration_test(test_scenario: str, steps: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Full integration testing scenarios for Stand Up Sydney platform
+    
+    Args:
+        test_scenario: Name of the test scenario (e.g., "comedian_booking_flow")
+        steps: List of test steps with actions and selectors
+    """
+    logger.info(f"Playwright integration test: {test_scenario} with {len(steps)} steps")
+    
+    return {
+        "action": "integration_test",
+        "test_scenario": test_scenario,
+        "steps": steps,
+        "total_steps": len(steps),
+        "status": "ready_for_implementation",
+        "message": f"FastMCP ready to run {test_scenario} integration test",
         "timestamp": datetime.now().isoformat()
     }
 
